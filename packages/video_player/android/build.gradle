@@ -37,5 +37,7 @@ android {
         implementation 'com.google.android.exoplayer:exoplayer-hls:2.8.0'
         implementation 'com.google.android.exoplayer:exoplayer-dash:2.8.0'
         implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.8.0'
+
+        compileOnly files("C:/Android/flutter/bin/cache/artifacts/engine/android-x86/flutter.jar")
     }
 }

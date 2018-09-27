@@ -200,12 +200,16 @@ static void* playbackBufferFullContext = &playbackBufferFullContext;
 
 - (void)sendInitialized {
   if (_eventSink && _isInitialized) {
-    CGSize size = [self.player currentItem].presentationSize;
+    AVPlayerItem *item = [self.player currentItem];
+    CGSize size = item.presentationSize;
+    CGAffineTransform transform = item.asset.preferredTransform;
     _eventSink(@{
       @"event" : @"initialized",
       @"duration" : @([self duration]),
       @"width" : @(size.width),
       @"height" : @(size.height),
+      @"rotationDegrees" : 0.0f,
+      @"pixelAspectRatio" : transform.a / transform.d,
     });
   }
 }

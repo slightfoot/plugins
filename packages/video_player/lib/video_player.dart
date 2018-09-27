@@ -67,10 +67,22 @@ class VideoPlayerValue {
   ///
   /// Is null when [initialized] is false.
   final Size size;
+  
+  /// The [rotationDegrees] of the currently loaded video.
+  ///
+  /// Is null when [initialized] is false.
+  final double rotationDegrees;
+  
+  /// The [pixelAspectRatio] of the currently loaded video.
+  ///
+  /// Is null when [initialized] is false.
+  final double pixelAspectRatio;
 
   VideoPlayerValue({
     @required this.duration,
     this.size,
+    this.rotationDegrees,
+    this.pixelAspectRatio,
     this.position = const Duration(),
     this.buffered = const <DurationRange>[],
     this.isPlaying = false,
@@ -87,11 +99,24 @@ class VideoPlayerValue {
 
   bool get initialized => duration != null;
   bool get hasError => errorDescription != null;
-  double get aspectRatio => size.width / size.height;
+
+  /// Returns the corrected [aspectRatio] based on the videos PAR and Rotation.
+  double get aspectRatio {
+    if(!initialized){
+      return 1.0;
+    }
+    double displayAspectRatio = (size.width / size.height) * pixelAspectRatio;
+    if(rotationDegrees == 90 || rotationDegrees == 270){
+      return (1.0 / displayAspectRatio);
+    }
+    return displayAspectRatio;
+  }
 
   VideoPlayerValue copyWith({
     Duration duration,
     Size size,
+    double rotationDegrees,
+    double pixelAspectRatio,
     Duration position,
     List<DurationRange> buffered,
     bool isPlaying,
@@ -103,6 +128,8 @@ class VideoPlayerValue {
     return VideoPlayerValue(
       duration: duration ?? this.duration,
       size: size ?? this.size,
+      rotationDegrees: rotationDegrees ?? this.rotationDegrees,
+      pixelAspectRatio: pixelAspectRatio ?? this.pixelAspectRatio,
       position: position ?? this.position,
       buffered: buffered ?? this.buffered,
       isPlaying: isPlaying ?? this.isPlaying,
@@ -118,6 +145,8 @@ class VideoPlayerValue {
     return '$runtimeType('
         'duration: $duration, '
         'size: $size, '
+        'rotationDegrees: $rotationDegrees, '
+        'pixelAspectRatio: $pixelAspectRatio, '
         'position: $position, '
         'buffered: [${buffered.join(', ')}], '
         'isPlaying: $isPlaying, '
@@ -228,6 +257,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           value = value.copyWith(
             duration: Duration(milliseconds: map['duration']),
             size: Size(map['width'].toDouble(), map['height'].toDouble()),
+            rotationDegrees: map['rotationDegrees'].toDouble(),
+            pixelAspectRatio: map['pixelAspectRatio'].toDouble(),
           );
           initializingCompleter.complete(null);
           _applyLooping();

@@ -73,4 +73,37 @@ void main() {
         ),
         findsOneWidget);
   });
+
+  // DAR = Display Aspect Ratio
+  // SAR = Storage Aspect Ratio (WxH)
+  // PAR = Pixel Aspect Ratio
+  test('Check DAR = SARxPAR', (){
+    final VideoPlayerValue videoPlayerValue = VideoPlayerValue(
+      duration: Duration(seconds: 1),
+      size: const Size(1.0, 0.5),
+      rotationDegrees: 0.0,
+      pixelAspectRatio: 0.5,
+    );
+    expect(1.0, videoPlayerValue.aspectRatio);
+  });
+
+  test('Check DAR based on Rotation 90°', (){
+    final VideoPlayerValue videoPlayerValue = VideoPlayerValue(
+      duration: Duration(seconds: 1),
+      size: const Size(1.0, 0.5),
+      rotationDegrees: 90.0,
+      pixelAspectRatio: 1.0,
+    );
+    expect(0.5, videoPlayerValue.aspectRatio);
+  });
+
+  test('Check DAR based on Rotation 270°', (){
+    final VideoPlayerValue videoPlayerValue = VideoPlayerValue(
+      duration: Duration(seconds: 1),
+      size: const Size(1.0, 0.5),
+      rotationDegrees: 270.0,
+      pixelAspectRatio: 1.0,
+    );
+    expect(0.5, videoPlayerValue.aspectRatio);
+  });
 }
