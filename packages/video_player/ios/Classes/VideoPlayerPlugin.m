@@ -208,8 +208,8 @@ static void* playbackBufferFullContext = &playbackBufferFullContext;
       @"duration" : @([self duration]),
       @"width" : @(size.width),
       @"height" : @(size.height),
-      @"rotationDegrees" : 0.0f,
-      @"pixelAspectRatio" : transform.a / transform.d,
+      @"rotationDegrees" : @(0.0),
+      @"pixelAspectRatio" : @(transform.a / transform.d),
     });
   }
 }
