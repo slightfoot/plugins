@@ -57,6 +57,8 @@ final class VideoPlayer {
 
   private boolean isInitialized = false;
 
+  private boolean playing = false;
+
   VideoPlayer(
       Context context,
       EventChannel eventChannel,
@@ -183,6 +185,7 @@ final class VideoPlayer {
               Map<String, Object> event = new HashMap<>();
               event.put("event", "completed");
               eventSink.success(event);
+              playing = false;
             }
           }
 
@@ -220,10 +223,16 @@ final class VideoPlayer {
 
   void play() {
     exoPlayer.setPlayWhenReady(true);
+    playing = true;
+  }
+
+  boolean isPlaying() {
+    return playing;
   }
 
   void pause() {
     exoPlayer.setPlayWhenReady(false);
+    playing = false;
   }
 
   void setLooping(boolean value) {
@@ -271,6 +280,7 @@ final class VideoPlayer {
     if (isInitialized) {
       exoPlayer.stop();
     }
+    playing = false;
     textureEntry.release();
     eventChannel.setStreamHandler(null);
     if (surface != null) {

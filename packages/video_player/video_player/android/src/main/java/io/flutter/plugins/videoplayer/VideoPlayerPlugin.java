@@ -4,10 +4,15 @@
 
 package io.flutter.plugins.videoplayer;
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 import android.util.LongSparseArray;
+import android.view.WindowManager;
+
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
@@ -19,7 +24,7 @@ import io.flutter.view.FlutterMain;
 import io.flutter.view.TextureRegistry;
 
 /** Android platform implementation of the VideoPlayerPlugin. */
-public class VideoPlayerPlugin implements MethodCallHandler, FlutterPlugin {
+public class VideoPlayerPlugin implements MethodCallHandler, FlutterPlugin, ActivityAware {
   private static final String TAG = "VideoPlayerPlugin";
   private final LongSparseArray<VideoPlayer> videoPlayers = new LongSparseArray<>();
   private FlutterState flutterState;
@@ -36,6 +41,7 @@ public class VideoPlayerPlugin implements MethodCallHandler, FlutterPlugin {
             registrar::lookupKeyForAsset,
             registrar.textures());
     flutterState.startListening(this);
+    flutterState.activity = registrar.activity();
   }
 
   /** Registers this with the stable v1 embedding. Will not respond to lifecycle events. */
@@ -67,6 +73,26 @@ public class VideoPlayerPlugin implements MethodCallHandler, FlutterPlugin {
     }
     flutterState.stopListening();
     flutterState = null;
+  }
+
+  @Override
+  public void onAttachedToActivity(ActivityPluginBinding binding) {
+    flutterState.activity = binding.getActivity();
+  }
+
+  @Override
+  public void onDetachedFromActivityForConfigChanges() {
+    flutterState.activity = null;
+  }
+
+  @Override
+  public void onReattachedToActivityForConfigChanges(ActivityPluginBinding binding) {
+    flutterState.activity = binding.getActivity();
+  }
+
+  @Override
+  public void onDetachedFromActivity() {
+    flutterState.activity = null;
   }
 
   private void disposeAllPlayers() {
@@ -164,10 +190,12 @@ public class VideoPlayerPlugin implements MethodCallHandler, FlutterPlugin {
         break;
       case "play":
         player.play();
+        enableKeepScreenOn();
         result.success(null);
         break;
       case "pause":
         player.pause();
+        disableKeepScreenOn();
         result.success(null);
         break;
       case "seekTo":
@@ -181,6 +209,7 @@ public class VideoPlayerPlugin implements MethodCallHandler, FlutterPlugin {
         break;
       case "dispose":
         player.dispose();
+        disableKeepScreenOn();
         videoPlayers.remove(textureId);
         result.success(null);
         break;
@@ -188,6 +217,27 @@ public class VideoPlayerPlugin implements MethodCallHandler, FlutterPlugin {
         result.notImplemented();
         break;
     }
+  }
+
+  private void enableKeepScreenOn() {
+    if(hasPlayingVideoPlayers()){
+      flutterState.activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+  }
+
+  private void disableKeepScreenOn() {
+    if(!hasPlayingVideoPlayers()){
+      flutterState.activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+  }
+
+  private boolean hasPlayingVideoPlayers() {
+    for(int i = 0; i < videoPlayers.size(); i++) {
+      if(videoPlayers.valueAt(i).isPlaying()){
+        return true;
+      }
+    }
+    return false;
   }
 
   private interface KeyForAssetFn {
@@ -205,6 +255,8 @@ public class VideoPlayerPlugin implements MethodCallHandler, FlutterPlugin {
     private final KeyForAssetAndPackageName keyForAssetAndPackageName;
     private final TextureRegistry textureRegistry;
     private final MethodChannel methodChannel;
+
+    Activity activity;
 
     FlutterState(
         Context applicationContext,

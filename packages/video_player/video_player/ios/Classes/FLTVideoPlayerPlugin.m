@@ -394,6 +394,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 /// is useful for the case where the Engine is in the process of deconstruction
 /// so the channel is going to die or is already dead.
 - (void)disposeSansEventChannel {
+  _isPlaying = false;
   _disposed = true;
   [_displayLink invalidate];
   [[_player currentItem] removeObserver:self forKeyPath:@"status" context:statusContext];
@@ -423,7 +424,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 @interface FLTVideoPlayerPlugin ()
 @property(readonly, weak, nonatomic) NSObject<FlutterTextureRegistry>* registry;
 @property(readonly, weak, nonatomic) NSObject<FlutterBinaryMessenger>* messenger;
-@property(readonly, strong, nonatomic) NSMutableDictionary* players;
+@property(readonly, strong, nonatomic) NSMutableDictionary<NSNumber*, FLTVideoPlayer*>* players;
 @property(readonly, strong, nonatomic) NSObject<FlutterPluginRegistrar>* registrar;
 @end
 
@@ -468,6 +469,28 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
   player.eventChannel = eventChannel;
   _players[@(textureId)] = player;
   result(@{@"textureId" : @(textureId)});
+}
+
+- (BOOL)hasPlayingVideoPlayers {
+  for(NSNumber* key in _players){
+    FLTVideoPlayer* player = _players[key];
+    if(player.isPlaying){
+      return true;
+    }
+  }
+  return false;
+}
+
+- (void)enableKeepScreenOn {
+  if([self hasPlayingVideoPlayers]) {
+    [[UIApplication sharedApplication] setIdleTimerDisabled: true];
+  }
+}
+
+- (void)disableKeepScreenOn {
+  if([self hasPlayingVideoPlayers]) {
+    [[UIApplication sharedApplication] setIdleTimerDisabled: false];
+  }
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
@@ -525,6 +548,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
                      dispatch_get_main_queue(), ^{
                        if (!player.disposed) {
                          [player dispose];
+						 [self disableKeepScreenOn];
                        }
                      });
       result(nil);
@@ -536,6 +560,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
       result(nil);
     } else if ([@"play" isEqualToString:call.method]) {
       [player play];
+      [self enableKeepScreenOn];
       result(nil);
     } else if ([@"position" isEqualToString:call.method]) {
       result(@([player position]));
@@ -544,6 +569,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
       result(nil);
     } else if ([@"pause" isEqualToString:call.method]) {
       [player pause];
+      [self disableKeepScreenOn];
       result(nil);
     } else {
       result(FlutterMethodNotImplemented);
