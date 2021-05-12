@@ -130,7 +130,11 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     }
     if (params.containsKey("initialUrl")) {
       String url = (String) params.get("initialUrl");
-      webView.loadUrl(url);
+      Map<String, String> headers = (Map<String, String>) params.get("headers");
+      if (headers == null) {
+        headers = Collections.emptyMap();
+      }
+      webView.loadUrl(url, headers);
     }
   }
 

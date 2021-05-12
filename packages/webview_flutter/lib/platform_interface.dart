@@ -450,6 +450,7 @@ class CreationParams {
   /// The `autoMediaPlaybackPolicy` parameter must not be null.
   CreationParams({
     this.initialUrl,
+    this.headers,
     this.webSettings,
     this.javascriptChannelNames = const <String>{},
     this.userAgent,
@@ -461,6 +462,12 @@ class CreationParams {
   ///
   /// When null the webview will be created without loading any page.
   final String? initialUrl;
+
+  /// The headers to load with the [initialUrl]
+  ///
+  /// If `headers` is not null and the URL is an HTTP URL, the key value paris in `headers` will
+  /// be added as key value pairs of HTTP headers for the request.
+  final Map<String, String>? headers;
 
   /// The initial [WebSettings] for the new webview.
   ///
@@ -490,7 +497,7 @@ class CreationParams {
 
   @override
   String toString() {
-    return '$runtimeType(initialUrl: $initialUrl, settings: $webSettings, javascriptChannelNames: $javascriptChannelNames, UserAgent: $userAgent)';
+    return '$runtimeType(initialUrl: $initialUrl, headers: $headers, settings: $webSettings, javascriptChannelNames: $javascriptChannelNames, UserAgent: $userAgent)';
   }
 }
 

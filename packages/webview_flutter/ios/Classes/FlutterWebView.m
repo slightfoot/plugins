@@ -116,7 +116,12 @@
 
     NSString* initialUrl = args[@"initialUrl"];
     if ([initialUrl isKindOfClass:[NSString class]]) {
-      [self loadUrl:initialUrl];
+      id headers = args[@"headers"];
+      if ([headers isKindOfClass:[NSDictionary class]]) {
+        [self loadUrl:initialUrl withHeaders:headers];
+      } else {
+        [self loadUrl:initialUrl];
+      }
     }
   }
   return self;
